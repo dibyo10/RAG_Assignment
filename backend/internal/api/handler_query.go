@@ -8,7 +8,6 @@ import (
 
 	"github.com/dibyochakraborty/notebooklm/internal/llm"
 	"github.com/dibyochakraborty/notebooklm/internal/memory"
-	"github.com/dibyochakraborty/notebooklm/internal/metrics"
 	"github.com/dibyochakraborty/notebooklm/internal/retriever"
 	"github.com/dibyochakraborty/notebooklm/internal/store"
 )
@@ -88,10 +87,23 @@ func (h *queryHandler) Query(c *gin.Context) {
 
 	latencyMs := time.Since(start).Milliseconds()
 
-	// Compute metrics
-	m := metrics.Compute(scored)
+	// Score stats for the query log (no eval metrics)
+	var scoreMin, scoreMax, scoreMean float64
+	if len(scored) > 0 {
+		scoreMin, scoreMax = scored[0].Score, scored[0].Score
+		var sum float64
+		for _, sc := range scored {
+			if sc.Score < scoreMin {
+				scoreMin = sc.Score
+			}
+			if sc.Score > scoreMax {
+				scoreMax = sc.Score
+			}
+			sum += sc.Score
+		}
+		scoreMean = sum / float64(len(scored))
+	}
 
-	// Build chunk hits for storage
 	hits := make([]*store.QueryChunkHit, len(scored))
 	for i, sc := range scored {
 		hits[i] = &store.QueryChunkHit{
@@ -101,20 +113,15 @@ func (h *queryHandler) Query(c *gin.Context) {
 		}
 	}
 
-	// Store query log
 	qlog := &store.QueryLog{
 		SessionID:       sessionID,
 		DocumentID:      sess.DocumentID,
 		QueryText:       body.Query,
 		TopK:            topK,
 		ChunksRetrieved: len(scored),
-		ScoreMin:        m.ScoreMin,
-		ScoreMax:        m.ScoreMax,
-		ScoreMean:       m.ScoreMean,
-		ScoreStd:        m.ScoreStd,
-		MRR:             m.MRR,
-		RecallAtK:       m.RecallAtK,
-		NDCG:            m.NDCG,
+		ScoreMin:        scoreMin,
+		ScoreMax:        scoreMax,
+		ScoreMean:       scoreMean,
 		LatencyMs:       latencyMs,
 	}
 	go h.metricsStore.InsertQueryLog(qlog, hits)
@@ -146,16 +153,6 @@ func (h *queryHandler) Query(c *gin.Context) {
 			"answer":     answer,
 			"chunks":     chunkResp,
 			"latency_ms": latencyMs,
-			"metrics": gin.H{
-				"mrr":        m.MRR,
-				"recall_at_k": m.RecallAtK,
-				"ndcg":       m.NDCG,
-				"score_min":  m.ScoreMin,
-				"score_max":  m.ScoreMax,
-				"score_mean": m.ScoreMean,
-				"score_std":  m.ScoreStd,
-				"count":      m.Count,
-			},
 		},
 	})
 }
