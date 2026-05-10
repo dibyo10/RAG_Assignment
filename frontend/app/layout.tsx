@@ -36,6 +36,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${fraunces.variable} ${plex.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col relative">
+        <div className="relative z-10 border-b border-rule bg-amber-50 text-amber-900 text-xs">
+          <div className="max-w-6xl mx-auto px-8 py-2 text-center">
+            Heads up: the backend runs on Render&rsquo;s free tier. The first request after a quiet spell may take ~1 minute to wake up.
+          </div>
+        </div>
         <header className="relative z-10 border-b border-rule bg-paper/60 backdrop-blur">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-baseline justify-between">
             <Link href="/notebooks" className="flex items-baseline gap-3">
