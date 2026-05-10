@@ -92,6 +92,11 @@ func main() {
 	if err := ensureCollection(collectionsClient, cfg.CollectionName); err != nil {
 		log.Fatalf("ensure qdrant collection: %v", err)
 	}
+	// Ensure payload index on document_id (required for filtered search).
+	// Idempotent — Qdrant returns OK if the index already exists.
+	if err := ensureDocumentIDIndex(pointsClient, cfg.CollectionName); err != nil {
+		log.Printf("warn: ensure document_id index: %v", err)
+	}
 
 	// Build embedder and LLM generator (both use Gemini API key)
 	emb, err := embedder.New(cfg.GeminiKey)
@@ -134,6 +139,18 @@ func main() {
 
 // Vector size for gemini-embedding-2 is 3072
 const embeddingDim = 3072
+
+func ensureDocumentIDIndex(client qdrant.PointsClient, collection string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ft := qdrant.FieldType_FieldTypeKeyword
+	_, err := client.CreateFieldIndex(ctx, &qdrant.CreateFieldIndexCollection{
+		CollectionName: collection,
+		FieldName:      "document_id",
+		FieldType:      &ft,
+	})
+	return err
+}
 
 func ensureCollection(client qdrant.CollectionsClient, name string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
