@@ -1,0 +1,30 @@
+# Node
+node_modules/
+.next/
+out/
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Go build
+*.exe
+*.test
+*.out
+backend/bin/
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

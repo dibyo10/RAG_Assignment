@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+:root {
+  /* Editorial cream + deep forest palette */
+  --paper:        #f4efe6;
+  --paper-soft:   #ede7d8;
+  --paper-deep:   #e2dac8;
+  --ink:          #1a2421;
+  --ink-soft:     #3d4a45;
+  --ink-faint:    #6b7770;
+  --rule:         #c9bfa9;
+  --rule-soft:    #d8cfba;
+  --accent:       #2d4a3e;
+  --accent-warm:  #b8541f;
+  --accent-gold:  #b89548;
+  --highlight:    #f8e8c0;
+}
+
+@theme inline {
+  --color-paper:        var(--paper);
+  --color-paper-soft:   var(--paper-soft);
+  --color-paper-deep:   var(--paper-deep);
+  --color-ink:          var(--ink);
+  --color-ink-soft:     var(--ink-soft);
+  --color-ink-faint:    var(--ink-faint);
+  --color-rule:         var(--rule);
+  --color-rule-soft:    var(--rule-soft);
+  --color-accent:       var(--accent);
+  --color-accent-warm:  var(--accent-warm);
+  --color-accent-gold:  var(--accent-gold);
+  --color-highlight:    var(--highlight);
+
+  --font-sans:    var(--font-sans-stack);
+  --font-mono:    var(--font-mono-stack);
+  --font-display: var(--font-display-stack);
+}
+
+html, body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans-stack);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle paper grain */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(184, 84, 31, 0.04), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(45, 74, 62, 0.05), transparent 50%);
+  mix-blend-mode: multiply;
+}
+
+/* Display serif for headings */
+.font-display {
+  font-family: var(--font-display-stack);
+  font-feature-settings: "ss01";
+  letter-spacing: -0.02em;
+}
+
+/* Hairline rule */
+.hairline {
+  border-color: var(--rule);
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--rule-soft);
+  border-radius: 999px;
+  border: 2px solid var(--paper);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--rule); }
+
+/* Fade-in with staggered reveal */
+@keyframes paperRise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-rise { animation: paperRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Chat message animation */
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-msg { animation: msgIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Thinking dots */
+@keyframes blink { 0%, 60%, 100% { opacity: 0.2; } 30% { opacity: 1; } }
+.dot { animation: blink 1.4s infinite both; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Markdown / prose tweaks for assistant responses */
+.prose-editorial {
+  font-family: var(--font-sans-stack);
+  color: var(--ink);
+  line-height: 1.65;
+}
+.prose-editorial h1, .prose-editorial h2, .prose-editorial h3 {
+  font-family: var(--font-display-stack);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 1.4em;
+  margin-bottom: 0.5em;
+}
+.prose-editorial p { margin: 0.7em 0; }
+.prose-editorial code {
+  font-family: var(--font-mono-stack);
+  font-size: 0.9em;
+  background: var(--paper-deep);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+}
+.prose-editorial pre {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+.prose-editorial pre code { background: transparent; padding: 0; color: inherit; }
+.prose-editorial ul, .prose-editorial ol { margin: 0.7em 0; padding-left: 1.6em; }
+.prose-editorial li { margin: 0.3em 0; }
+.prose-editorial strong { color: var(--ink); font-weight: 600; }
+.prose-editorial blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* Number marker for chunk citations */
+.cite-marker {
+  font-family: var(--font-mono-stack);
+  font-size: 0.65em;
+  vertical-align: super;
+  color: var(--accent-warm);
+  font-weight: 600;
+  margin: 0 0.1em;
+}

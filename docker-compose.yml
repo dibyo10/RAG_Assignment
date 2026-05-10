@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    container_name: notebooklm_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: notebooklm_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6334
+      - DB_PATH=/data/notebooklm.db
+      - PORT=8080
+      - EMBED_WORKERS=8
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - TOP_K=5
+      - MAX_HISTORY_TURNS=10
+      - UPLOAD_DIR=/uploads
+      - QDRANT_COLLECTION=notebooklm
+    volumes:
+      - backend_data:/data
+      - upload_data:/uploads
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: notebooklm_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  qdrant_data:
+  backend_data:
+  upload_data:
