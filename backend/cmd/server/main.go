@@ -12,7 +12,10 @@ import (
 
 	qdrant "github.com/qdrant/go-client/qdrant"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"crypto/tls"
 
 	"github.com/dibyochakraborty/notebooklm/internal/api"
 	"github.com/dibyochakraborty/notebooklm/internal/embedder"
@@ -77,7 +80,24 @@ func main() {
 
 	// Connect to Qdrant via gRPC
 	qdrantAddr := fmt.Sprintf("%s:%d", cfg.QdrantHost, cfg.QdrantPort)
-	conn, err := grpc.NewClient(qdrantAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	dialOpts := []grpc.DialOption{}
+	if cfg.QdrantUseTLS {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	if cfg.QdrantAPIKey != "" {
+		apiKey := cfg.QdrantAPIKey
+		dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			ctx = metadata.AppendToOutgoingContext(ctx, "api-key", apiKey)
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}))
+		dialOpts = append(dialOpts, grpc.WithStreamInterceptor(func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+			ctx = metadata.AppendToOutgoingContext(ctx, "api-key", apiKey)
+			return streamer(ctx, desc, cc, method, opts...)
+		}))
+	}
+	conn, err := grpc.NewClient(qdrantAddr, dialOpts...)
 	if err != nil {
 		log.Fatalf("connect qdrant: %v", err)
 	}

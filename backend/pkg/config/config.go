@@ -12,6 +12,8 @@ type Config struct {
 	GeminiKey      string
 	QdrantHost     string
 	QdrantPort     int
+	QdrantAPIKey   string
+	QdrantUseTLS   bool
 	DBPath         string
 	Port           string
 	EmbedWorkers   int
@@ -30,6 +32,8 @@ func Load() *Config {
 		GeminiKey:       mustEnv("GEMINI_API_KEY"),
 		QdrantHost:      getEnv("QDRANT_HOST", "localhost"),
 		QdrantPort:      getEnvInt("QDRANT_PORT", 6334),
+		QdrantAPIKey:    getEnv("QDRANT_API_KEY", ""),
+		QdrantUseTLS:    getEnvBool("QDRANT_USE_TLS", false),
 		DBPath:          getEnv("DB_PATH", "./notebooklm.db"),
 		Port:            getEnv("PORT", "8080"),
 		EmbedWorkers:    getEnvInt("EMBED_WORKERS", 8),
@@ -53,6 +57,16 @@ func mustEnv(key string) string {
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if v := os.Getenv(key); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err == nil {
+			return b
+		}
 	}
 	return fallback
 }
